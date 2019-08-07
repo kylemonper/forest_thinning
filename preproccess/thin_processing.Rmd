@@ -1,0 +1,156 @@
+---
+title: "decplots"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Load these libraries
+
+
+library(tidyverse)
+library(lubridate)
+library(chron)
+library(formattable)
+library(gridExtra)
+library(kableExtra)
+library(RHESSysIOinR)
+# function used to aggregate daily data to water year
+# many of the relationships we are interested in can't be seen if we look at daily output
+# because of time lags - aggregating by water year makes many of these more visible
+# note relationships are also "better" if we use water year rather than calendar year
+# because of the time lags and  seasonality of precipitation and active growing season
+resthinagg = function(resthin.tmp) {
+  
+  # note that for stores (plantc) we use average
+  # for fluxes (et, watertransfer, evap, trans, psn) we use sum
+  # for some variables we look at annual maximum (pkswe) and maxcpool 
+resthin.tmp.wy = resthin.tmp %>% group_by(scen,thin,canopy,wy) %>% 
+  dplyr::summarize(plantc=mean(plantc, na.rm=T),
+         lai=mean(lai),
+         trans=sum(trans),
+         evap=sum(evap), 
+         gpsn=sum(gpsn), 
+         resp=sum(resp), 
+         precip=sum(precip),
+         maxcpool=max(cpool),
+         pkswe=max(snow),
+         streamflow=sum(streamflow)) 
+
+resthin.tmp.wy$et = resthin.tmp.wy$evap+resthin.tmp.wy$trans
+# pcpool is an indicator of drought stress (what percent of the plant carbon is in stored
+# carbohydrate (cpool)
+resthin.tmp.wy$pcpool = with(resthin.tmp.wy, ifelse(plantc > 0, maxcpool/plantc,0))
+resthin.tmp.wy = mutate(resthin.tmp.wy, drought = ifelse(wy %in% c(2012:2015),TRUE, FALSE) )
+# design a variable to track how long its been since the 'thinning' even occured
+resthin.tmp.wy = mutate(resthin.tmp.wy, wyg=wy-scen)
+
+# clear a variable to denote which soil type it is
+resthin.tmp.wy$soil = resthin.tmp$soil[1]
+
+
+return(resthin.tmp.wy)
+} 
+```
+
+Preprocessing
+```{r preprocessing}
+
+# read in data files
+resthin.deep = read.table("../rhessys/scripts/resthin.test.txt", header=T)
+resthin.deep = mkdate(resthin.deep)
+# create aggregations by water year
+resthin.deep.wy = resthinagg(resthin.deep)
+
+```
+
+```{r graphing}
+
+
+cc <- scales::seq_gradient_pal("grey", "darkblue", "Lab")(seq(0,1,length.out=length(unique(resthin.deep.wy$thin))))
+cc[1] = "red"
+lbs = as.character(unique(resthin.deep.wy$thin))
+lbs[1] = "Control"
+
+# rainfall
+# Figure 3
+p0=ggplot(subset(resthin.deep.wy, canopy=="both" & thin==100), aes(x=wyg, y=precip, fill=precip))+geom_col()+labs(y="Precipition (mm/yr)", x="Year after thin", fill="Precip (mm/yr)") + facet_wrap(~scen, nrow=4) +
+  theme(legend.position= c(0.5,0.1), legend.direction = "horizontal") + guides(fill=guide_legend(title.position="top")) + 
+  scale_fill_gradient(low="yellow", high="darkblue")
+p0
+
+
+# variables through time
+
+
+p2=ggplot(subset(resthin.deep.wy, canopy=="control"), aes(x=wyg, y=lai, col=as.factor(thin)))+geom_line()+facet_wrap(~scen)+
+  scale_color_manual(values=cc, labels=lbs) 
+
+p2
+
+
+
+# LAI change
+base_lai = resthin.deep.wy %>% subset(canopy=="both" & thin == 100) %>%
+  group_by(soil) %>% dplyr::summarize(lai=mean(lai))
+pall_a = ggplot(subset(resthin.deep.wy, canopy=="both" & thin != 100), aes(x=wyg, y=lai, col=as.factor(soil)), size=3)+facet_wrap(~thin) +stat_summary(fun.y="mean", geom="line")+ 
+  geom_hline(yintercept = base_lai$lai[1], colour="green")+
+ geom_hline(yintercept = base_lai$lai[3], colour="orange")+
+  geom_hline(yintercept = base_lai$lai[2], colour="black") + 
+  labs(y="Leaf Area Index", x="Years since thin", col="PAWSC", linetype="") +
+  scale_color_manual(values=c("green","black","orange"), labels=c("DEEP","MID","SHALLOW"))+ theme_bw() +
+  theme(legend.position="bottom", text=element_text(size=16)) 
+
+pall_a
+
+
+base_et = resthin.deep.wy %>% subset(canopy=="both" & thin == 100) %>%
+  group_by(soil) %>% summarize(et=mean(et))
+pall_c = ggplot(subset(resthin.deep.wy, canopy=="both" & thin != 100), aes(x=wyg, y=et, col=as.factor(soil)))+facet_wrap(~thin) +stat_summary(fun.y="mean", geom="line")+ 
+  geom_hline(yintercept = base_et$et[1], colour="red")+
+ geom_hline(yintercept = base_et$et[3], colour="blue")+
+  geom_hline(yintercept = base_et$et[2], colour="green")
+
+pall_c
+
+tmp = resthin.deep.wy %>% subset(canopy=="both" & thin != 100) %>% 
+  group_by(wyg, thin, soil) %>% dplyr::summarize(meanlai=mean(lai), 
+  lowerlai=quantile(lai, probs=0.1), upperlai=quantile(lai, probs=0.90))
+
+pall_b = ggplot(tmp, aes(x=wyg, y=meanlai, col=soil)) + facet_wrap(~thin) +geom_ribbon(aes(ymin=lowerlai, ymax=upperlai, fill=soil), alpha=0.2) +
+ geom_hline(yintercept = base_lai$lai[1], colour="darkgreen")+
+ geom_hline(yintercept = base_lai$lai[3], colour="blue")+
+ geom_hline(yintercept = base_lai$lai[2], colour="green")
+
+pall_b
+
+
+
+
+
+
+```
+
+
+ET plots
+
+```{r ETchangedeep}
+
+#boxplot of change
+#Figure 6a
+# deep
+tmp = subset(resthin.deep.wy, thin==0 & canopy=="both")
+tmp2 = subset(resthin.deep.wy, canopy=="both" )
+tmp3 = merge(tmp2, tmp, by=c("scen", "wy","wyg","canopy"), suffix=c("",".base"), all.x=F)
+#tmp3 = subset(tmp3, tmp3$thin != 0.05)
+# change these values to be whatever there is in your data frame 
+tmp3 = subset(tmp3, tmp3$thin %in% c(0,100))
+p=ggplot(tmp3, 
+aes(x=as.factor(wyg), y=et-et.base ))
+p=p + geom_boxplot(outlier.size=NULL) + 
+facet_wrap(~thin) + geom_hline(yintercept=0, col="grey", size=1)
+p = p + labs(x="Year Since Thin", y="Change in ET (mm/yr)")
+p
+
+```

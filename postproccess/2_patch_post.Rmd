@@ -1,0 +1,350 @@
+---
+title: "JF_processing"
+output: html_document
+---
+
+```{r setup, include=T, warning=F}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+
+
+
+library(tidyverse)
+library(lubridate)
+library(chron)
+library(formattable)
+library(gridExtra)
+library(kableExtra)
+library(RHESSysIOinR)
+library(data.table)
+library(stringr)
+library(beepr)
+# function used to aggregate daily data to water year
+# many of the relationships we are interested in can't be seen if we look at daily output
+# because of time lags - aggregating by water year makes many of these more visible
+# note relationships are also "better" if we use water year rather than calendar year
+# because of the time lags and  seasonality of precipitation and active growing season
+resthinagg2 = function(resthin.tmp) {
+  
+  # note that for stores (plantc) we use average
+  # for fluxes (et, watertransfer, evap, trans, psn) we use sum
+  # for some variables we look at annual maximum (pkswe) and maxcpool 
+resthin.tmp.wy = resthin.tmp %>% 
+  group_by(scen,climproj,wy,thin) %>% 
+  dplyr::summarize(
+         plantc=mean(plantc, na.rm=T),
+         stemc= mean(stemc),
+         lai=mean(lai),
+         trans=sum(trans),
+         evap=sum(evap), 
+         gpsn=sum(gpsn), 
+         resp=sum(resp), 
+         precip=sum(precip),
+         maxcpool=max(cpool),
+         streamflow=sum(streamflow)
+         ) 
+
+resthin.tmp.wy$et = resthin.tmp.wy$evap+resthin.tmp.wy$trans
+# pcpool is an indicator of drought stress (what percent of the plant carbon is in stored
+# carbohydrate (cpool)
+resthin.tmp.wy$pcpool = with(resthin.tmp.wy, ifelse(plantc > 0, maxcpool/plantc,0))
+
+# design a variable to track how long its been since the 'thinning' even occured
+resthin.tmp.wy = mutate(resthin.tmp.wy, wyg=wy-scen)
+
+
+return(resthin.tmp.wy)
+} 
+
+
+### function for simulating thinning
+init_thin <- function (thin) {
+  
+  # define proportions
+  c <- thin
+  t <- 1 - thin
+  
+  thinned <- data %>% 
+    dplyr::filter(canopy == 'thin')
+  
+  control <- data  %>% 
+    dplyr::filter(canopy == 'control')
+   
+  both <- data.frame(matrix(nrow = nrow(thinned), ncol = length(thinned)+1))
+  names(both) <- c(names(thinned), 'thin')
+  
+  both$evap <- thinned$evap*t + control$evap*c
+  both$trans <- thinned$trans*t +  control$trans*c
+  both$gpsn <- thinned$gpsn*t + control$gpsn*c
+  both$resp <- thinned$resp*t + control$resp*c
+  both$lai <- thinned$lai*t +  control$lai*c
+  both$cpool <- thinned$cpool*t + control$cpool*c
+  both$plantc <- thinned$plantc*t + control$plantc*c
+  both$stemc <- thinned$stemc*t + control$stemc*c
+  both$streamflow <- thinned$streamflow*t + control$streamflow*c
+  both$thin <- thin*100
+  both$wyg <- thinned$wyg
+  both$climproj <- thinned$climproj
+  both$level <- thinned$level
+  both$scen <- thinned$scen
+  both$year <- thinned$year
+  both$month <- thinned$month
+  both$day <- thinned$day
+ 
+  
+  return(both)
+}
+
+
+
+```
+
+
+#for reading in .txt files and processing
+```{r preprocessing}
+
+### read in climate projection runs
+#create list of file suffixes for reading in with for loop
+climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN')
+
+# read in the data
+for (i in 1:length(climscen)) {
+  
+  data <- read.table(sprintf('/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin-2patch-%s.txt', climscen[i]), header = T)
+  data <- select(data, -thin)
+  #perform thinning
+  tmp <- lapply(seq(0,1,.2), init_thin)
+  thinned <- rbindlist(tmp)
+  
+  date <- mkdate(thinned)
+  res <- resthinagg2(date)
+  
+  if (str_detect(climscen[i], '45')) {
+    res$level <- 'RCP-45'
+  } else {
+    res$level <- 'RCP-85'
+  }
+  
+  if (i == 1) {
+  thin_all <- res
+  } else {
+    thin_all <- bind_rows(thin_all, res)
+    }
+  
+  rm(res, tmp, data, date, thinned)
+  print(i)
+}
+
+## read in historic data
+data <- read.table("/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin_2patch.txt", header=T)
+data$climproj <- 'historic'
+data <- select(data, -thin)
+## thin
+tmp <- lapply(seq(0,1,.2), init_thin)
+thinned <- rbindlist(tmp)
+
+# convert date
+date <- mkdate(thinned)
+#aggregate by wy
+base <- resthinagg2(date)
+# set climate 'level'
+base$level <- 'historic'
+
+
+
+#combin historic with projected
+thin_full <- bind_rows(thin_all, base)
+
+#remove 2030 scenario to make facet_wrapping neater
+thin_full <- dplyr::filter(thin_full, scen != '2030')
+
+
+# subset data by projection level
+rcp45 <- dplyr::filter(thin_full, level == 'RCP-45')
+rcp85 <- dplyr::filter(thin_full, level == 'RCP-85')
+
+
+```
+
+
+
+```{r read climate data, include = F}
+###
+# clim file names
+clim <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CAN', 'rcp45-CNRM', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CAN', 'rcp85-CNRM', 'JF')
+
+for (i in 1:length(clim)) {
+  # read in data
+  tmp = read_rhessys_met(sprintf("/Users/kmonper/Google Drive/JDSF/rhessys/clim/%s", clim[i]))
+  # id projection
+  tmp$climproj <- clim[i]
+  
+  if (str_detect(clim[i], '45')) {
+    tmp$level <- 'rcp-4.5'
+  } else if (str_detect(clim[i], '85')) {
+    tmp$level <- 'rcp-8.8'
+  } else {
+    tmp$level <- 'historic'
+  }
+  
+  if (i ==1) { 
+    met <- tmp
+  } else {
+      met <- bind_rows(met, tmp)
+    }
+}
+```
+
+
+
+```{r ColorScales, echo = F}
+cc <- scales::seq_gradient_pal("grey", "darkblue", "Lab")(seq(0,1,length.out=length(unique(thin_full$thin))))
+cc[6] <- "red"
+lbs <- as.character(unique(thin_full$thin))
+lbs[lbs==100] <- "Control"
+
+theme_set(theme_bw())
+```
+  
+
+
+***  
+***  
+
+## Carbon
+##### Note: line is mean value for each climate 'level' (i.e historic, rcp-4.5, rcp-8.5) and error for all ribbon graphs:  +/- 2 sd (which, for the projections, includes all 4 models)
+
+```{r plant carbon, echo=T}
+plantc <- thin_full %>% 
+  group_by(wyg, thin, level) %>% 
+  summarise(
+    mean = mean(plantc),
+    sd = sd(plantc)
+  )
+
+plantc_plot <- ggplot(plantc, aes(x=wyg, y=mean, group = level, color = level, fill = level)) +
+  geom_line()  +
+  geom_hline(yintercept = plantc$mean[plantc$thin==100 & plantc$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd, fill = level), alpha = .3) +
+  labs(
+    x = 'years after thin',
+    y = 'mean plant carbon across models',
+    title = 'change in plant carbon over time by thinning'
+  )
+plantc_plot
+```
+  
+  
+* 100 = 0% thinning
+* reference bar set to amount of plant carbon in year 0 during the control (0% thinning)  
+  
+  
+```{r stem carbon, echo = T}
+stemc <- thin_full %>% 
+  group_by(wyg, thin, level) %>% 
+  summarise(
+    mean = mean(stemc),
+    sd = sd(stemc)
+  )
+
+stemc_plot <- ggplot(stemc, aes(x=wyg, y=mean, group = level, fill = level)) +
+  geom_line() +
+  geom_hline(yintercept = stemc$mean[stemc$thin==100 & stemc$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in stem carbon over time by thinning %'
+  )
+stemc_plot
+```
+
+
+  
+***  
+***
+
+
+## LAI
+
+
+
+```{r lai scen, echo = F, include = F}
+
+tmp <- base
+tmp$scen <- recode(base$scen,
+               "2035" = 1,
+               "2040" = 2,
+               '2045' = 3,
+               '2050' = 4,
+               '2055' = 5,
+               '2060' = 6,
+               '2065' = 7,
+               '2070' = 8,
+               '2075' = 9,
+               '2080' = 10,
+               '2085' = 11)
+
+lai_scen <- ggplot(tmp, aes(x=wyg, y=lai, col = as.factor(thin)))+
+  geom_line()+
+  facet_wrap(~scen)+
+  scale_color_manual(values=cc, labels = lbs)  +
+  #theme(legend.position = 'none') +
+  labs(
+    x = 'years after thin',
+    y = 'LAI',
+    title = 'Change in LAI over time by starting year for historic data'
+  )
+
+lai_scen
+
+```
+
+```{r}
+flux <- thin_full %>% 
+  group_by(wyg, thin, climproj) %>% 
+  summarise(
+    mean = mean(plantc),
+    sd = sd(plantc)
+  )
+
+ggplot(flux, aes(wyg, mean, group = as.factor(thin), fill = as.factor(thin))) +
+  geom_line() +
+  facet_wrap(~climproj) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3)
+```
+
+```{r}
+summary <- flux %>% 
+  ungroup() %>% 
+  filter(wyg == 79) %>% 
+  mutate(mean = round(mean/1000,0)) %>% 
+  select(-wyg, -sd) %>% 
+  spread(thin, mean) %>% 
+  arrange(-`100`)
+
+met_sum <- met %>% 
+  group_by(climproj) %>% 
+  summarise(
+    total_precip = sum(rain)
+  )
+met_sum$climproj[met_sum$climproj == 'JF'] <- 'historic'
+
+ext <- left_join(summary, met_sum)
+
+kable(ext)
+```
+
+
+
+
+### streamflow 
+```{r}
+ggplot(rcp45, aes(x = wyg, y = streamflow, group = thin, color = as.factor(thin))) +
+  geom_line() +
+  facet_wrap(~climproj)
+```
+
