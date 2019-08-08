@@ -35,7 +35,7 @@ resthin.tmp.wy = resthin.tmp %>%
   dplyr::summarize(
          plantc=mean(plantc, na.rm=T),
          stemc_live= mean(stemc_live),
-         steamc_dead=mean(stemc_dead),
+         stemc_dead=mean(stemc_dead),
          lai=mean(lai),
          trans=sum(trans),
          evap=sum(evap), 
@@ -82,8 +82,8 @@ init_thin <- function (thin) {
   both$lai <- thinned$lai*t +  control$lai*c
   both$cpool <- thinned$cpool*t + control$cpool*c
   both$plantc <- thinned$plantc*t + control$plantc*c
-  both$stemc_live <- thinned$stem_livec*t + control$stemc_live*c
-  both$stemc_dead <- thinned$stem_dead*t + control$stemc_dead*c
+  both$stemc_live <- thinned$stemc_live*t + control$stemc_live*c
+  both$stemc_dead <- thinned$stemc_dead*t + control$stemc_dead*c
   both$streamflow <- thinned$streamflow*t + control$streamflow*c
   both$thin <- thin*100
   both$wyg <- thinned$wyg
@@ -227,8 +227,8 @@ plantc_plot
 stemc <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
-    mean = mean(stemc),
-    sd = sd(stemc)
+    mean = mean(stemc_live),
+    sd = sd(stemc_live)
   )
 
 stemc_plot <- ggplot(stemc, aes(x=wyg, y=mean, group = level, fill = level)) +
@@ -244,6 +244,27 @@ stemc_plot <- ggplot(stemc, aes(x=wyg, y=mean, group = level, fill = level)) +
 stemc_plot
 ```
 
+
+```{r stem carbon, echo = T}
+stemc_dead <- thin_full %>% 
+  group_by(wyg, thin, level) %>% 
+  summarise(
+    mean = mean(steamc_dead),
+    sd = sd(steamc_dead)
+  )
+
+stemc_plot <- ggplot(stemc_dead, aes(x=wyg, y=mean, group = level, fill = level)) +
+  geom_line() +
+  geom_hline(yintercept = stemc_dead$mean[stemc_dead$thin==100 & stemc_dead$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in dead stem carbon over time by thinning %'
+  )
+stemc_plot
+```
 
   
 ***  
