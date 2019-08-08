@@ -14,7 +14,7 @@ library(RHESSysIOinR)
 
 
 # determine which variables you want to save from RHESSys
-ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc", 'canopy', 'streamflow')
+ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow')
 scenvars = c("thin","scen","climproj","day","month","year")
 
 
@@ -28,7 +28,7 @@ endwy = startwy+nyrs
 
 
 # base name of climate files
-climproj <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN', 'historic')
+climproj <- c('historic', 'rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN')
 
 ### create emptymatrix to be populated
 
@@ -38,7 +38,7 @@ climscen = subset(clim, clim$wy >= startwy[1] & clim$wy < endwy[1])
 nday=nrow(climscen)
 nday = nday+2
 
-nvals = 2*nday*length(startwy)*8
+nvals = 3*nday*length(startwy)*9
 
 # thin_clim will store results - you should changes this to what every you want to call it
 thin_2patch = as.data.frame(matrix(nrow=nvals, ncol=length(c(ecovars,scenvars))))
@@ -49,7 +49,7 @@ for(proj in 1:length(climproj)) {
   
   for (scen in 1:length(startwy)) {
       
-      cmd1=sprintf("awk -f ../worldfiles/changec.awk thin=1 < ../worldfiles/redwood.2path.thin.test > ../worldfiles/redwood_warm_400-2patch.world.Y%dM10D1H1", startwy[scen]-1);
+      cmd1=sprintf("awk -f ../worldfiles/changec.awk thin=1 < ../worldfiles/redwood.2path.thin.test > ../worldfiles/redwood_warm-2patch.world.Y%dM10D1H1", startwy[scen]-1);
       system(cmd1)
       
       #cmd1=sprintf("awk -f ../flowtables/changeareaflow.v7.awk thin=%f <  ../flowtables/flow.newv > ../flowtables/flow.single.area.deep", 
@@ -60,7 +60,7 @@ for(proj in 1:length(climproj)) {
                     startwy[scen]-1, startwy[scen]-1, startwy[scen]-1)
       write(tmp, file="../tecfiles/tec.thinb.deep")
       
-      cmd2 = sprintf("%s -t ../tecfiles/tec.thinb.deep -w ../worldfiles/redwood_warm_400-2patch.world -r ../flowtables/Jackson-2patch.flow  -st %d 8 1 1 -ed %d 10 1 1 -pre ../out/JF_thin-proj -s 1 10 -gw 0 0 -whdr ../worldfiles/JacksonPatch-%s.hdr -b -p -g -c -climrepeat", 
+      cmd2 = sprintf("%s -t ../tecfiles/tec.thinb.deep -w ../worldfiles/redwood_warm-2patch.world -r ../flowtables/Jackson-2patch.flow  -st %d 8 1 1 -ed %d 10 1 1 -pre ../out/JF_thin-proj -s 1 10 -gw 0 0 -whdr ../worldfiles/JacksonPatch-%s.hdr -b -p -g -c -climrepeat", 
                      rhessysver,startwy[scen]-10, endwy[scen]-1, climproj[proj]); 
       system(cmd2)
       
@@ -86,8 +86,9 @@ for(proj in 1:length(climproj)) {
       thin_2patch$cpool[j:endj] = a$cdg$cpool[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$plantc[j:endj] = a$cdg$plantc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==3]
-      thin_2patch$stemc[j:endj] = a$bdg$overstory_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
-      thin_2patch$streamflow[j:endj] = a$bd$streamflow[a$cdg$stratumID==11 & a$cdg$patchID==3]
+      thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
+      thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
+      thin_2patch$streamflow[j:endj] = a$bd$streamflow
 
       j = endj+1
       endj = j+length(a$bd$day)-1
@@ -105,8 +106,9 @@ for(proj in 1:length(climproj)) {
       thin_2patch$cpool[j:endj] = a$cdg$cpool[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$plantc[j:endj] = a$cdg$plantc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==4]
-      thin_2patch$stemc[j:endj] = a$bdg$overstory_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
-      thin_2patch$streamflow[j:endj] = a$bd$streamflow[a$cdg$stratumID==11 & a$cdg$patchID==4]
+      thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
+      thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
+      thin_2patch$streamflow[j:endj] = a$bd$streamflow
 
       
       j = endj+1

@@ -34,7 +34,8 @@ resthin.tmp.wy = resthin.tmp %>%
   group_by(scen,climproj,wy,thin) %>% 
   dplyr::summarize(
          plantc=mean(plantc, na.rm=T),
-         stemc= mean(stemc),
+         stemc_live= mean(stemc_live),
+         steamc_dead=mean(stemc_dead),
          lai=mean(lai),
          trans=sum(trans),
          evap=sum(evap), 
@@ -81,7 +82,8 @@ init_thin <- function (thin) {
   both$lai <- thinned$lai*t +  control$lai*c
   both$cpool <- thinned$cpool*t + control$cpool*c
   both$plantc <- thinned$plantc*t + control$plantc*c
-  both$stemc <- thinned$stemc*t + control$stemc*c
+  both$stemc_live <- thinned$stem_livec*t + control$stemc_live*c
+  both$stemc_dead <- thinned$stem_dead*t + control$stemc_dead*c
   both$streamflow <- thinned$streamflow*t + control$streamflow*c
   both$thin <- thin*100
   both$wyg <- thinned$wyg
@@ -106,12 +108,12 @@ init_thin <- function (thin) {
 
 ### read in climate projection runs
 #create list of file suffixes for reading in with for loop
-climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN')
+climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN', 'historic')
 
 # read in the data
 for (i in 1:length(climscen)) {
   
-  data <- read.table(sprintf('/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin-2patch-%s.txt', climscen[i]), header = T)
+  data <- read.table(sprintf('/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin-proj-%s', climscen[i]), header = T)
   data <- select(data, -thin)
   #perform thinning
   tmp <- lapply(seq(0,1,.2), init_thin)
@@ -122,42 +124,22 @@ for (i in 1:length(climscen)) {
   
   if (str_detect(climscen[i], '45')) {
     res$level <- 'RCP-45'
-  } else {
+  } else if(str_detect(climscen[i], '85')) {
     res$level <- 'RCP-85'
+  } else {
+    res$level <- 'historic'
   }
   
+  
   if (i == 1) {
-  thin_all <- res
+  thin_full <- res
   } else {
-    thin_all <- bind_rows(thin_all, res)
+    thin_full <- bind_rows(thin_full, res)
     }
   
   rm(res, tmp, data, date, thinned)
   print(i)
 }
-
-## read in historic data
-data <- read.table("/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin_2patch.txt", header=T)
-data$climproj <- 'historic'
-data <- select(data, -thin)
-## thin
-tmp <- lapply(seq(0,1,.2), init_thin)
-thinned <- rbindlist(tmp)
-
-# convert date
-date <- mkdate(thinned)
-#aggregate by wy
-base <- resthinagg2(date)
-# set climate 'level'
-base$level <- 'historic'
-
-
-
-#combin historic with projected
-thin_full <- bind_rows(thin_all, base)
-
-#remove 2030 scenario to make facet_wrapping neater
-thin_full <- dplyr::filter(thin_full, scen != '2030')
 
 
 # subset data by projection level
