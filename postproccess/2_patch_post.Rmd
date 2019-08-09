@@ -3,7 +3,7 @@ title: "JF_processing"
 output: html_document
 ---
 
-```{r setup, include=T, warning=F}
+```{r setup, include=F, warning=F}
 
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -43,7 +43,11 @@ resthin.tmp.wy = resthin.tmp %>%
          resp=sum(resp), 
          precip=sum(precip),
          maxcpool=max(cpool),
-         streamflow=sum(streamflow)
+         streamflow=sum(streamflow),
+         tmin=min(tmin),
+         tmax=max(tmax),
+         tmin_avg=mean(tmin),
+         tmax_avg=mean(tmax)
          ) 
 
 resthin.tmp.wy$et = resthin.tmp.wy$evap+resthin.tmp.wy$trans
@@ -104,7 +108,7 @@ init_thin <- function (thin) {
 
 
 #for reading in .txt files and processing
-```{r preprocessing}
+```{r preprocessing, include=F}
 
 ### read in climate projection runs
 #create list of file suffixes for reading in with for loop
@@ -189,15 +193,33 @@ lbs[lbs==100] <- "Control"
 theme_set(theme_bw())
 ```
   
+```{r, echo = F}
+tmp <- mkdate(met)
+
+temps <- tmp %>% 
+  ungroup() %>%
+  filter(climproj != 'JF') %>% 
+  select(date, tmin, tmax, climproj) %>% 
+  gather(unit, value, - date, -climproj)
+
+ggplot(temps, aes(x = date, y = value, group = unit, color = unit)) +
+  geom_line() +
+  facet_wrap(~climproj) + 
+  labs(
+    x = 'date',
+    y = 'temp',
+    title = 'yearly min and max temperatures for each model'
+  )
+```
 
 
 ***  
 ***  
 
 ## Carbon
-##### Note: line is mean value for each climate 'level' (i.e historic, rcp-4.5, rcp-8.5) and error for all ribbon graphs:  +/- 2 sd (which, for the projections, includes all 4 models)
 
-```{r plant carbon, echo=T}
+
+```{r plant carbon, echo=F}
 plantc <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
@@ -219,10 +241,8 @@ plantc_plot
 ```
   
   
-* 100 = 0% thinning
-* reference bar set to amount of plant carbon in year 0 during the control (0% thinning)  
-  
-  
+#### dead and live stemc
+do we want to sum these into one?
 ```{r stem carbon, echo = T}
 stemc <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
@@ -233,7 +253,7 @@ stemc <- thin_full %>%
 
 stemc_plot <- ggplot(stemc, aes(x=wyg, y=mean, group = level, fill = level)) +
   geom_line() +
-  geom_hline(yintercept = stemc$mean[stemc$thin==100 & stemc$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  geom_hline(yintercept = stemc$mean[stemc$thin==100 & stemc$wyg == 0], color = 'darkgreen', size = 1) + 
   facet_wrap(~thin) +
   geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
   labs(
@@ -245,12 +265,12 @@ stemc_plot
 ```
 
 
-```{r stem carbon, echo = T}
+```{r stem carbon dead, echo = T}
 stemc_dead <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
-    mean = mean(steamc_dead),
-    sd = sd(steamc_dead)
+    mean = mean(stemc_dead),
+    sd = sd(stemc_dead)
   )
 
 stemc_plot <- ggplot(stemc_dead, aes(x=wyg, y=mean, group = level, fill = level)) +
@@ -266,61 +286,51 @@ stemc_plot <- ggplot(stemc_dead, aes(x=wyg, y=mean, group = level, fill = level)
 stemc_plot
 ```
 
-  
-***  
-***
+```{r}
+thin_full$stemc_total <- thin_full$stemc_dead+thin_full$stemc_live
 
-
-## LAI
-
-
-
-```{r lai scen, echo = F, include = F}
-
-tmp <- base
-tmp$scen <- recode(base$scen,
-               "2035" = 1,
-               "2040" = 2,
-               '2045' = 3,
-               '2050' = 4,
-               '2055' = 5,
-               '2060' = 6,
-               '2065' = 7,
-               '2070' = 8,
-               '2075' = 9,
-               '2080' = 10,
-               '2085' = 11)
-
-lai_scen <- ggplot(tmp, aes(x=wyg, y=lai, col = as.factor(thin)))+
-  geom_line()+
-  facet_wrap(~scen)+
-  scale_color_manual(values=cc, labels = lbs)  +
-  #theme(legend.position = 'none') +
-  labs(
-    x = 'years after thin',
-    y = 'LAI',
-    title = 'Change in LAI over time by starting year for historic data'
+stemc_tot <- thin_full %>% 
+  group_by(wyg, thin, level) %>% 
+  summarise(
+    mean = mean(stemc_total),
+    sd = sd(stemc_total)
   )
 
-lai_scen
+stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = level, fill = level)) +
+  geom_line() +
+  geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in TOTAL stem carbon over time by thinning %'
+  )
+stemc_plot
 
 ```
+  
 
-```{r}
+```{r, echo = F}
 flux <- thin_full %>% 
   group_by(wyg, thin, climproj) %>% 
   summarise(
-    mean = mean(plantc),
-    sd = sd(plantc)
+    mean = mean(stemc_total),
+    sd = sd(stemc_total)
   )
 
 ggplot(flux, aes(wyg, mean, group = as.factor(thin), fill = as.factor(thin))) +
   geom_line() +
   facet_wrap(~climproj) +
-  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3)
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3)  +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in total stem carbon over time by model'
+  )
 ```
-
-```{r}
+total plant carbon (Kg/m2) for each climate scenario based on thinning. precip is cumulative across all 100 years
+```{r, echo=F, warning=F, message=F}
 summary <- flux %>% 
   ungroup() %>% 
   filter(wyg == 79) %>% 
@@ -338,16 +348,29 @@ met_sum$climproj[met_sum$climproj == 'JF'] <- 'historic'
 
 ext <- left_join(summary, met_sum)
 
-kable(ext)
+kable(ext) %>% 
+  kable_styling()
 ```
 
 
 
+## streamflow
 
-### streamflow 
-```{r}
-ggplot(rcp45, aes(x = wyg, y = streamflow, group = thin, color = as.factor(thin))) +
+```{r, include = F}
+thin_sub <- c(0,100)
+
+stream45 <- filter(rcp45, thin %in% thin_sub)
+
+ggplot(stream45, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(thin))) +
   geom_line() +
   facet_wrap(~climproj)
 ```
 
+```{r, include = F}
+
+stream85 <- filter(rcp85, thin %in% thin_sub)
+
+ggplot(stream85, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(thin))) +
+  geom_line() +
+  facet_wrap(~climproj)
+```

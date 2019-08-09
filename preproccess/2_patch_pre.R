@@ -21,7 +21,7 @@ scenvars = c("thin","scen","climproj","day","month","year")
 
 # use this to set dates for starting water year, length of sim time
 # and number of years between repeated start dates (e.g 5)
-startwy = seq(from=2030, to=2085, by=5)
+startwy = seq(from=2020, to=2085, by=5)
 nyrs=100
 endwy = startwy+nyrs 
 
@@ -88,9 +88,8 @@ for(proj in 1:length(climproj)) {
       thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
-      thin_2patch$streamflow[j:endj] = a$bd$streamflow
-      thin_2patch$tmin[j:endj] = a$bd$tmin
-      thin_2patch$tmax[j:endj] = a$bd$tmax
+      thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 3]
+
       
 
       j = endj+1
@@ -111,9 +110,8 @@ for(proj in 1:length(climproj)) {
       thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
-      thin_2patch$streamflow[j:endj] = a$bd$streamflow
-      thin_2patch$tmin[j:endj] = a$bd$tmin
-      thin_2patch$tmax[j:endj] = a$bd$tmax
+      thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 4]
+
 
       
       j = endj+1

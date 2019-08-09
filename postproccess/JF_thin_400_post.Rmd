@@ -212,7 +212,7 @@ tmp <- thin_full %>%
    filter(scen %in% scen_sub & level != 'historic') %>% 
   group_by(wyg, climproj, scen, level) %>% 
   summarise(
-    mean = mean(precip),
+    mean = mean(precip, na.rm = T),
     lower = quantile(precip, probs=0.1), 
     upper=quantile((precip), probs=0.90)
   ) 
