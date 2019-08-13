@@ -14,14 +14,14 @@ library(RHESSysIOinR)
 
 
 # determine which variables you want to save from RHESSys
-ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow','tmax','tmin')
+ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow','tmax','tmin', 'heigth')
 scenvars = c("thin","scen","climproj","day","month","year")
 
 
 
 # use this to set dates for starting water year, length of sim time
 # and number of years between repeated start dates (e.g 5)
-startwy = seq(from=2020, to=2085, by=5)
+startwy = seq(from=2030, to=2085, by=5)
 nyrs=100
 endwy = startwy+nyrs 
 
@@ -45,7 +45,7 @@ thin_2patch = as.data.frame(matrix(nrow=nvals, ncol=length(c(ecovars,scenvars)))
 colnames(thin_2patch) = c(scenvars, ecovars)
 
 j = 1 
-for(proj in 1:length(climproj)) { 
+for (proj in 1:length(climproj)) { 
   
   for (scen in 1:length(startwy)) {
       
@@ -89,6 +89,7 @@ for(proj in 1:length(climproj)) {
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 3]
+      thin_2patch$heigth[j:endj] = a$cd$height[a$cd$stratumID == 11 & a$cd$patchID == 3]
 
       
 
@@ -111,6 +112,7 @@ for(proj in 1:length(climproj)) {
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 4]
+      thin_2patch$heigth[j:endj] = a$cd$height[a$cd$stratumID == 11 & a$cd$patchID == 4]
 
 
       

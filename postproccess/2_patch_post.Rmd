@@ -107,7 +107,7 @@ init_thin <- function (thin) {
 ```
 
 
-#for reading in .txt files and processing
+
 ```{r preprocessing, include=F}
 
 ### read in climate projection runs
@@ -203,7 +203,7 @@ temps <- tmp %>%
   gather(unit, value, - date, -climproj)
 
 ggplot(temps, aes(x = date, y = value, group = unit, color = unit)) +
-  geom_line() +
+  geom_line(alpha = .5) +
   facet_wrap(~climproj) + 
   labs(
     x = 'date',
@@ -242,8 +242,8 @@ plantc_plot
   
   
 #### dead and live stemc
-do we want to sum these into one?
-```{r stem carbon, echo = T}
+
+```{r stem carbon, echo = F}
 stemc <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
@@ -265,7 +265,7 @@ stemc_plot
 ```
 
 
-```{r stem carbon dead, echo = T}
+```{r stem carbon dead, echo = F}
 stemc_dead <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
@@ -286,7 +286,7 @@ stemc_plot <- ggplot(stemc_dead, aes(x=wyg, y=mean, group = level, fill = level)
 stemc_plot
 ```
 
-```{r}
+```{r, echo = F}
 thin_full$stemc_total <- thin_full$stemc_dead+thin_full$stemc_live
 
 stemc_tot <- thin_full %>% 
@@ -329,7 +329,9 @@ ggplot(flux, aes(wyg, mean, group = as.factor(thin), fill = as.factor(thin))) +
     title = 'change in total stem carbon over time by model'
   )
 ```
-total plant carbon (Kg/m2) for each climate scenario based on thinning. precip is cumulative across all 100 years
+    
+    
+  total plant carbon (Kg/m2) for each climate scenario based on thinning. precip is cumulative across all 100 years
 ```{r, echo=F, warning=F, message=F}
 summary <- flux %>% 
   ungroup() %>% 
@@ -352,11 +354,11 @@ kable(ext) %>%
   kable_styling()
 ```
 
-
+***
 
 ## streamflow
 
-```{r, include = F}
+```{r, echo = F}
 thin_sub <- c(0,100)
 
 stream45 <- filter(rcp45, thin %in% thin_sub)
@@ -366,7 +368,7 @@ ggplot(stream45, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(t
   facet_wrap(~climproj)
 ```
 
-```{r, include = F}
+```{r, echo = F}
 
 stream85 <- filter(rcp85, thin %in% thin_sub)
 
