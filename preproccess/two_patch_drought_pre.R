@@ -14,13 +14,14 @@ library(RHESSysIOinR)
 
 
 # determine which variables you want to save from RHESSys
-ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow','tmax','tmin', 'heigth')scenvars = c("thin","scen","climproj","day","month","year")
+ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow','tmax','tmin', 'heigth')
+scenvars = c("thin","scen","climproj","day","month","year")
 
 
 
 # use this to set dates for starting water year, length of sim time
 # and number of years between repeated start dates (e.g 5)
-startwy = 2020
+startwy = 2030
 nyrs=100
 endwy = startwy+nyrs 
 
@@ -70,7 +71,7 @@ for (proj in 1:length(climproj)) {
     
     
     endj = j+length(a$bd$day)-1
-    thin_2patch$scen[j:endj] = startwy[scen]
+    thin_2patch$scen[j:endj] = 2030
     thin_2patch$climproj[j:endj] = climproj[proj]
     thin_2patch$year[j:endj] = a$bd$year
     thin_2patch$day[j:endj] = a$bd$day
@@ -93,7 +94,7 @@ for (proj in 1:length(climproj)) {
     
     j = endj+1
     endj = j+length(a$bd$day)-1
-    thin_2patch$scen[j:endj] = startwy[scen]
+    thin_2patch$scen[j:endj] = 2030
     thin_2patch$climproj[j:endj] = climproj[proj]
     thin_2patch$year[j:endj] = a$bd$year
     thin_2patch$day[j:endj] = a$bd$day
@@ -118,3 +119,12 @@ for (proj in 1:length(climproj)) {
     
   
 }
+
+tmp <- filter(thin_2patch, climproj == 'rcp85-had_early')
+write.table(tmp, '../out/JF_thin-proj-rcp45-Had_early')
+
+tmp <- filter(thin_2patch, climproj == 'rcp85-had_late')
+write.table(tmp, '../out/JF_thin-proj-rcp45-Had_late')
+
+
+
