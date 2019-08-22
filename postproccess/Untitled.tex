@@ -1,0 +1,256 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={JF\_processing},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{JF\_processing}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{}
+    \preauthor{}\postauthor{}
+    \date{}
+    \predate{}\postdate{}
+  
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\begin{document}
+\maketitle
+
+\includegraphics{Untitled_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Carbon}\label{carbon}
+
+\includegraphics{Untitled_files/figure-latex/plant carbon-1.pdf}
+
+\paragraph{dead and live stemc}\label{dead-and-live-stemc}
+
+\includegraphics{Untitled_files/figure-latex/stem carbon-1.pdf}
+
+\includegraphics{Untitled_files/figure-latex/stem carbon dead-1.pdf}
+
+\includegraphics{Untitled_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\includegraphics{Untitled_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+total plant carbon (Kg/m2) for each climate scenario based on thinning.
+precip is cumulative across all 100 years
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|r|r|r}
+\hline
+climproj & 0 & 20 & 40 & 60 & 80 & 100 & total\_precip\\
+\hline
+rcp85-CAN & 18 & 21 & 24 & 26 & 29 & 32 & 249363.0\\
+\hline
+rcp85-Had & 20 & 22 & 24 & 26 & 28 & 29 & 221864.0\\
+\hline
+rcp85-CNRM & 17 & 19 & 21 & 22 & 24 & 26 & 252815.4\\
+\hline
+rcp45-CAN & 14 & 16 & 18 & 20 & 22 & 24 & 235103.8\\
+\hline
+rcp45-Had & 16 & 17 & 19 & 21 & 22 & 24 & 212379.8\\
+\hline
+rcp85-MIROC & 14 & 16 & 17 & 19 & 21 & 23 & 202939.3\\
+\hline
+rcp45-CNRM & 14 & 15 & 17 & 18 & 20 & 21 & 248247.5\\
+\hline
+rcp45-MIROC & 11 & 13 & 14 & 16 & 18 & 20 & 200268.4\\
+\hline
+historic & 9 & 10 & 12 & 14 & 15 & 17 & 145613.6\\
+\hline
+\end{tabular}
+\end{table}
+
+\subparagraph{number of years until stemc returns to 90\% of original
+levels for each model and thinning
+treatment}\label{number-of-years-until-stemc-returns-to-90-of-original-levels-for-each-model-and-thinning-treatment}
+
+\begin{verbatim}
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+
+## Warning in min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j]
+## & : no non-missing arguments to min; returning Inf
+\end{verbatim}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l|l|l|l|l|l}
+\hline
+climproj & 0 & 20 & 40 & 60 & 80 & 100\\
+\hline
+rcp45-Had & 82 & 57 & 41 & 26 & 12 & 0\\
+\hline
+rcp45-MIROC & >99 & >99 & >99 & 45 & 14 & 0\\
+\hline
+rcp45-CNRM & >99 & 97 & 58 & 37 & 18 & 0\\
+\hline
+rcp45-CAN & >99 & 85 & 48 & 28 & 11 & 0\\
+\hline
+rcp85-Had & 53 & 42 & 32 & 21 & 8 & 0\\
+\hline
+rcp85-MIROC & >99 & >99 & 49 & 29 & 11 & 0\\
+\hline
+rcp85-CNRM & 71 & 54 & 40 & 27 & 12 & 0\\
+\hline
+rcp85-CAN & 65 & 50 & 35 & 22 & 7 & 0\\
+\hline
+historic & >99 & >99 & >99 & >99 & >99 & 0\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{verbatim}
+## Warning: Removed 12 rows containing missing values (geom_point).
+\end{verbatim}
+
+\includegraphics{Untitled_files/figure-latex/starting year on variability-1.pdf}
+
+Note that as the starting year (scenario) increases, we see that the
+largest percent increase in stemc see in the years just after harvest,
+along with an upwards shift in the minimum average temperatures. This
+may explain the initial large standard deviations within the some of the
+above figures.
+
+This trend is less pronounced when considering models that have less
+variability in their effect on stemc over time. i.e:
+
+\begin{verbatim}
+## Warning: Removed 12 rows containing missing values (geom_point).
+\end{verbatim}
+
+\includegraphics{Untitled_files/figure-latex/starting year on variability rcp45-cnrm-1.pdf}
+
+\includegraphics{Untitled_files/figure-latex/temperate comparison-1.pdf}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{streamflow}\label{streamflow}
+
+\includegraphics{Untitled_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+\includegraphics{Untitled_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+Things to explore here: overlay precipitation w/ ET. can also look out
+groundwater to try to figure out where the water is going
+
+
+\end{document}
