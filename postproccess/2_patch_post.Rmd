@@ -113,12 +113,12 @@ init_thin <- function (thin) {
 
 ### read in climate projection runs
 #create list of file suffixes for reading in with for loop
-climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN', 'historic')
+climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN','rcp85-had_early','rcp85-had_late', 'historic')
 
 # read in the data
 for (i in 1:length(climscen)) {
   
-  data <- read.table(sprintf('/Users/kmonper/Google Drive/JDSF/rhessys/out/JF_thin-proj-%s', climscen[i]), header = T)
+  data <- read.table(sprintf('/Users/Kyle/Google Drive/JDSF/rhessys/out/JF_thin-proj-%s', climscen[i]), header = T)
   data <- select(data, -thin)
   #perform thinning
   tmp <- lapply(seq(0,1,.2), init_thin)
@@ -137,20 +137,23 @@ for (i in 1:length(climscen)) {
   
   
   if (i == 1) {
-  thin_full <- res
+  thin_all <- res
   } else {
-    thin_full <- bind_rows(thin_full, res)
+    thin_all <- bind_rows(thin_all, res)
     }
   
   rm(res, tmp, data, date, thinned)
   print(i)
 }
 
-
 # subset data by projection level
-rcp45 <- dplyr::filter(thin_full, level == 'RCP-45')
-rcp85 <- dplyr::filter(thin_full, level == 'RCP-85')
+rcp45 <- dplyr::filter(thin_all, level == 'RCP-45')
+rcp85 <- dplyr::filter(thin_all, level == 'RCP-85')
 
+#drought
+drought <- filter(thin_all, climproj %in% c('rcp85-had_early','rcp85-had_late', 'rcp85-Had'))
+
+thin_full <- filter(thin_all, !climproj %in% c('rcp85-had_early','rcp85-had_late'))
 
 ```
 
@@ -163,7 +166,7 @@ clim <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CAN', 'rcp45-CNRM', 'rcp85-Had', 'r
 
 for (i in 1:length(clim)) {
   # read in data
-  tmp = read_rhessys_met(sprintf("/Users/kmonper/Google Drive/JDSF/rhessys/clim/%s", clim[i]))
+  tmp = read_rhessys_met(sprintf("/Users/Kyle/Google Drive/JDSF/rhessys/clim/%s", clim[i]))
   # id projection
   tmp$climproj <- clim[i]
   
@@ -495,4 +498,31 @@ ggplot(stream85, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(t
   
   Things to explore here: overlay precipitation w/ ET. can also look out groundwater to try to figure out where the water is going
 
+***
+
+### rcp85-Had drought scenarios
+
+```{r}
+drought$stemc_total <- drought$stemc_dead+drought$stemc_live
+
+stemc_tot <- drought %>% 
+  group_by(wyg, thin, climproj) %>% 
+  summarise(
+    mean = mean(stemc_total),
+    sd = sd(stemc_total)
+  )
+
+stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = climproj, fill = climproj)) +
+  geom_line(aes(color = climproj)) +
+  geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0 & stemc_tot$climproj == 'rcp85-Had'], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in TOTAL stem carbon over time by thinning %'
+  )
+stemc_plot
+
+
+```
 
