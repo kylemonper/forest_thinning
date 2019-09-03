@@ -311,14 +311,15 @@ stemc_tot <- thin_full %>%
   group_by(wyg, thin, level) %>% 
   summarise(
     mean = mean(stemc_total),
-    sd = sd(stemc_total)
+    lower=quantile(stemc_total, probs=0.1), 
+    upper=quantile(stemc_total, probs=0.90)))
   )
 
 stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = level, fill = level)) +
   geom_line() +
   geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
   facet_wrap(~thin) +
-  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha = .3) +
   labs(
     x = 'years after thin',
     y = 'stem carbon',
