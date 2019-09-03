@@ -121,10 +121,10 @@ for (proj in 1:length(climproj)) {
 }
 
 tmp <- filter(thin_2patch, climproj == 'rcp85-had_early')
-write.table(tmp, '../out/JF_thin-proj-rcp45-Had_early')
+write.table(tmp, '../out/JF_thin-proj-rcp85-Had_early')
 
 tmp <- filter(thin_2patch, climproj == 'rcp85-had_late')
-write.table(tmp, '../out/JF_thin-proj-rcp45-Had_late')
+write.table(tmp, '../out/JF_thin-proj-rcp85-Had_late')
 
 
 

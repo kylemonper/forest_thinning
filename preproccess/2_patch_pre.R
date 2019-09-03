@@ -14,8 +14,8 @@ library(RHESSysIOinR)
 
 
 # determine which variables you want to save from RHESSys
-ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","precip","stemc_live",'stemc_dead', 'canopy', 'streamflow','tmax','tmin', 'heigth')
-scenvars = c("thin","scen","climproj","day","month","year")
+ecovars = c("evap","trans","gpsn","resp","lai","cpool","plantc","stemc_live",'stemc_dead', 'canopy', 'streamflow', 'heigth','leafc_dead','leafc_live', 'rootc_live', 'rootc_dead', 'soilc')
+scenvars = c("scen","climproj","day","month","year")
 
 
 
@@ -85,13 +85,15 @@ for (proj in 1:length(climproj)) {
       thin_2patch$evap[j:endj] = a$pd$evap[a$pd$patchID==3]+a$pd$evap_surface[a$pd$patchID==3]+a$pd$soil_evap[a$pd$patchID==3]
       thin_2patch$cpool[j:endj] = a$cdg$cpool[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$plantc[j:endj] = a$cdg$plantc[a$cdg$stratumID==11 & a$cdg$patchID==3]
-      thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==3]
       thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 3]
       thin_2patch$heigth[j:endj] = a$cd$height[a$cd$stratumID == 11 & a$cd$patchID == 3]
-
-      
+      thin_2patch$leafc_dead[j:endj] = a$cdg$dead_leafc[a$cdg$stratumID==11 & a$cdg$patchID == 3]
+      thin_2patch$leafc_live[j:endj] = a$cdg$leafc_store[a$cdg$stratumID==11 & a$cdg$patchID == 3]
+      thin_2patch$rootc_dead[j:endj] = a$cdg$dead_crootc[a$cdg$stratumID==11 & a$cdg$patchID == 3]
+      thin_2patch$rootc_live[j:endj] = a$cdg$live_crootc[a$cdg$stratumID==11 & a$cdg$patchID == 3]
+      thin_2patch$soilc[j:endj] = a$bdg$soilc
 
       j = endj+1
       endj = j+length(a$bd$day)-1
@@ -108,12 +110,14 @@ for (proj in 1:length(climproj)) {
       thin_2patch$evap[j:endj] = a$pd$evap[a$pd$patchID==4]+a$pd$evap_surface[a$pd$patchID==4]+a$pd$soil_evap[a$pd$patchID==4]
       thin_2patch$cpool[j:endj] = a$cdg$cpool[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$plantc[j:endj] = a$cdg$plantc[a$cdg$stratumID==11 & a$cdg$patchID==4]
-      thin_2patch$precip[j:endj] = a$bd$precip[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$stemc_live[j:endj] = a$cdg$live_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$stemc_dead[j:endj] = a$cdg$dead_stemc[a$cdg$stratumID==11 & a$cdg$patchID==4]
       thin_2patch$streamflow[j:endj] = a$pd$streamflow[a$pd$patchID == 4]
       thin_2patch$heigth[j:endj] = a$cd$height[a$cd$stratumID == 11 & a$cd$patchID == 4]
-
+      thin_2patch$leafc_dead[j:endj] = a$cdg$dead_leafc[a$cdg$stratumID==11 & a$cdg$patchID == 4]
+      thin_2patch$leafc_live[j:endj] = a$cdg$leafc_store[a$cdg$stratumID==11 & a$cdg$patchID == 4]
+      thin_2patch$rootc_dead[j:endj] = a$cdg$dead_crootc[a$cdg$stratumID==11 & a$cdg$patchID == 4]
+      thin_2patch$rootc_live[j:endj] = a$cdg$live_crootc[a$cdg$stratumID==11 & a$cdg$patchID == 4]
 
       
       j = endj+1
