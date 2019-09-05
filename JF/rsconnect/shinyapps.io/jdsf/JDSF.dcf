@@ -5,8 +5,8 @@ account: jdsf
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1148162
-bundleId: 2386252
+bundleId: 2389828
 url: https://jdsf.shinyapps.io/JDSF/
-when: 1567640403.43242
+when: 1567725691.84637
 asMultiple: FALSE
 asStatic: FALSE
