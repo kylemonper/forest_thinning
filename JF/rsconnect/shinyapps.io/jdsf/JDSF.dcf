@@ -1,0 +1,12 @@
+name: JDSF
+title: JDSF
+username:
+account: jdsf
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1148162
+bundleId: 2386252
+url: https://jdsf.shinyapps.io/JDSF/
+when: 1567640403.43242
+asMultiple: FALSE
+asStatic: FALSE
