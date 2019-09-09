@@ -220,7 +220,7 @@ temps <- met_date %>%
   select(date, tmin, tmax, climproj) %>% 
   gather(unit, value, - date, -climproj)
 
-ggplot(temps, aes(x = date, y = value, group = unit, color = unit)) +
+ggplot(temps, aes(x = date, y = value, color = unit)) +
   geom_line(alpha = .5) +
   facet_wrap(~climproj) + 
   labs(
@@ -577,25 +577,25 @@ ggplot(stream85, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(t
 ### rcp85-Had drought scenarios
 
 ```{r}
-# drought$stemc_total <- drought$stemc_dead+drought$stemc_live
-# 
-# stemc_tot <- drought %>% 
-#   group_by(wyg, thin, climproj) %>% 
-#   summarise(
-#     mean = mean(stemc_total),
-#     sd = sd(stemc_total)
-#   )
-# 
-# stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = climproj, fill = climproj)) +
-#   geom_line(aes(color = climproj)) +
-#   geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0 & stemc_tot$climproj == 'rcp85-Had'], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
-#   facet_wrap(~thin) +
-#   labs(
-#     x = 'years after thin',
-#     y = 'stem carbon',
-#     title = 'change in TOTAL stem carbon over time by thinning %'
-#   )
-# stemc_plot
+drought$stemc_total <- drought$stemc_dead+drought$stemc_live
+
+stemc_tot <- drought %>%
+  group_by(wyg, thin, climproj) %>%
+  summarise(
+    mean = mean(stemc_total),
+    sd = sd(stemc_total)
+  )
+
+stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = climproj, fill = climproj)) +
+  geom_line(aes(color = climproj)) +
+  geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0 & stemc_tot$climproj == 'rcp85-Had'], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  facet_wrap(~thin) +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in TOTAL stem carbon over time by thinning %'
+  )
+stemc_plot
 
 
 ```
