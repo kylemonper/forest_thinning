@@ -21,6 +21,7 @@ library(data.table)
 library(stringr)
 library(beepr)
 # function used to aggregate daily data to water year
+#~ named 2 as this is for the 2-patch method
 # many of the relationships we are interested in can't be seen if we look at daily output
 # because of time lags - aggregating by water year makes many of these more visible
 # note relationships are also "better" if we use water year rather than calendar year
@@ -118,7 +119,7 @@ init_thin <- function (thin) {
 
 # ### read in climate projection runs
 # #create list of file suffixes for reading in with for loop
-climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN','historic')
+climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CNRM', 'rcp85-CAN','historic','rcp85-had_early','rcp85-had_late')
 # 
 # # read in the data
 # for (i in 1:length(climscen)) {
@@ -128,9 +129,14 @@ climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had'
 #   tmp <- lapply(seq(0,1,.2), init_thin)
 #   thinned <- rbindlist(tmp)
 #   
+#   # add date
 #   date <- mkdate(thinned)
-#   res <- resthinagg2(date)
 #   
+#   #summaris results
+#   res <- resthinagg2(date)
+#
+#
+#   # add new column identifying the climate scenario   
 #   if (str_detect(climscen[i], '45')) {
 #     res$level <- 'RCP-45'
 #   } else if(str_detect(climscen[i], '85')) {
@@ -139,84 +145,84 @@ climscen <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CNRM', 'rcp45-CAN', 'rcp85-Had'
 #     res$level <- 'historic'
 #   }
 #   
-#   
+#   # bind each results table together
 #   if (i == 1) {
 #   thin_all <- res
 #   } else {
 #     thin_all <- bind_rows(thin_all, res)
 #     }
 #   
+#   # clean environment
 #   # rm(res, tmp, data, date, thinned)
 #   print(i)
 # }
 # 
-# # subset data by projection level
-# rcp45 <- dplyr::filter(thin_all, level == 'RCP-45')
-# rcp85 <- dplyr::filter(thin_all, level == 'RCP-85')
 # 
 # #drought
 # drought <- filter(thin_all, climproj %in% c('rcp85-had_early','rcp85-had_late', 'rcp85-Had'))
 # 
 # thin_full <- filter(thin_all, !climproj %in% c('rcp85-had_early','rcp85-had_late'))
 # 
-# write.csv(thin_full, "~/Documents/forest_thinning/thin_full.csv")
+# 
+# write.csv(drought, '../ShinyApp/drought.csv')
+# write.csv(thin_full, "../ShinyApp/thin_full.csv")
 
-thin_full <- read_csv("~/Documents/forest_thinning/thin_full.csv")
+### read in data
+thin_full <- read_csv("../ShinyApp/thin_full.csv")
 
 rcp45 <- dplyr::filter(thin_full, level == 'RCP-45')
 rcp85 <- dplyr::filter(thin_full, level == 'RCP-85')
 
+drought <- read_csv('../ShinyApp/drought.csv')
+
 
 ```
 
 
 
-```{r read climate data, include = F}
+```{r read climate data, echo = F}
 ###
 # clim file names
-clim <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CAN', 'rcp45-CNRM', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CAN', 'rcp85-CNRM', 'JF')
+# clim <- c('rcp45-Had', 'rcp45-MIROC', 'rcp45-CAN', 'rcp45-CNRM', 'rcp85-Had', 'rcp85-MIROC', 'rcp85-CAN', 'rcp85-CNRM', 'JF')
+# 
+# for (i in 1:length(clim)) {
+#   # read in data
+#   tmp = read_rhessys_met(sprintf("/Users/kmonper/Google Drive/JDSF/rhessys/clim/%s", clim[i]))
+#   # id projection
+#   tmp$climproj <- clim[i]
+#   
+#   if (str_detect(clim[i], '45')) {
+#     tmp$level <- 'rcp-4.5'
+#   } else if (str_detect(clim[i], '85')) {
+#     tmp$level <- 'rcp-8.8'
+#   } else {
+#     tmp$level <- 'historic'
+#   }
+#   
+#   if (i ==1) { 
+#     met <- tmp
+#   } else {
+#       met <- bind_rows(met, tmp)
+#     }
+# }
+# 
+# met_date <- mkdate(met)
+#
+# write.csv(met_date, 'met.csv')
 
-for (i in 1:length(clim)) {
-  # read in data
-  tmp = read_rhessys_met(sprintf("/Users/kmonper/Google Drive/JDSF/rhessys/clim/%s", clim[i]))
-  # id projection
-  tmp$climproj <- clim[i]
-  
-  if (str_detect(clim[i], '45')) {
-    tmp$level <- 'rcp-4.5'
-  } else if (str_detect(clim[i], '85')) {
-    tmp$level <- 'rcp-8.8'
-  } else {
-    tmp$level <- 'historic'
-  }
-  
-  if (i ==1) { 
-    met <- tmp
-  } else {
-      met <- bind_rows(met, tmp)
-    }
-}
+met_date <- read_csv('../ShinyApp/met.csv')
 
-met_date <- mkdate(met)
+
 ```
 
 
-
-```{r ColorScales, echo = F}
-cc <- scales::seq_gradient_pal("grey", "darkblue", "Lab")(seq(0,1,length.out=length(unique(thin_full$thin))))
-cc[6] <- "red"
-lbs <- as.character(unique(thin_full$thin))
-lbs[lbs==100] <- "Control"
-
-theme_set(theme_bw())
-```
-  
-```{r, echo = F}
-
+ 
+```{r temperature, echo = F}
+# graph yearly max and min temps for each model
 
 temps <- met_date %>% 
   ungroup() %>%
-  filter(climproj != 'JF') %>% 
+  filter(climproj != 'JF', wy < 2100) %>% 
   select(date, tmin, tmax, climproj) %>% 
   gather(unit, value, - date, -climproj)
 
@@ -230,6 +236,34 @@ ggplot(temps, aes(x = date, y = value, color = unit)) +
   )
 ```
 
+```{r precip, echo = F}
+#graph yearly total precip for each model
+
+
+#remove historic climate level data as it starts in 1950
+proj_clim <- filter(met_date, climproj != 'JF')
+
+precip <- proj_clim %>% 
+  filter(wy < 2100) %>% 
+    group_by(wy, climproj) %>% 
+    summarise(
+      rain = sum(rain)
+    )
+    
+ggplot(precip, aes(wy, rain, fill = rain)) +
+  geom_col() +
+  facet_wrap(~climproj) + 
+  scale_fill_gradient(low="yellow", high="darkblue") + 
+  labs(
+    x = 'water year',
+    y = 'total precip (mm)',
+    title = 'total yearly precipitation by model'
+      )
+
+
+```
+
+
 
 ***  
 ***  
@@ -238,22 +272,24 @@ ggplot(temps, aes(x = date, y = value, color = unit)) +
 
 
 ```{r plant carbon, echo=F}
+#total plant carbon
+
 plantc <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
-    mean = mean(plantc),
-    sd = sd(plantc)
+    mean = mean(plantc/1000),
+    sd = sd(plantc/1000)
   )
 
-plantc_plot <- ggplot(plantc, aes(x=wyg, y=mean, group = level, color = level, fill = level)) +
+plantc_plot <- ggplot(plantc, aes(x=wyg, y=mean, fill = level)) +
   geom_line()  +
   geom_hline(yintercept = plantc$mean[plantc$thin==100 & plantc$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
   facet_wrap(~thin) +
   geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd, fill = level), alpha = .3) +
   labs(
     x = 'years after thin',
-    y = 'mean plant carbon across models',
-    title = 'change in plant carbon over time by thinning'
+    y = 'mean plant carbon (Kg/m^2)',
+    fill = 'climate scenario'
   )
 plantc_plot
 ```
@@ -298,39 +334,46 @@ stemc_plot <- ggplot(stemc_dead, aes(x=wyg, y=mean, group = level, fill = level)
   geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3) +
   labs(
     x = 'years after thin',
-    y = 'stem carbon',
-    title = 'change in dead stem carbon over time by thinning %'
+    y = 'mean stem carbon (Kg/m^2)',
+    title = 'change in dead stem carbon over time by thinning %',
+    fill = 'climate scenario'
   )
 stemc_plot
 ```
 
-```{r, echo = F}
-thin_full$stemc_total <- thin_full$stemc_dead+thin_full$stemc_live
+```{r stemc total, echo = F}
+# total stem carbon
+
+#calculate total stem C as sum of live and dead
+thin_full$stemc_total <- (thin_full$stemc_dead+thin_full$stemc_live)/1000
 
 stemc_tot <- thin_full %>% 
   group_by(wyg, thin, level) %>% 
   summarise(
     mean = mean(stemc_total),
     lower=quantile(stemc_total, probs=0.1), 
-    upper=quantile(stemc_total, probs=0.90)))
-  )
+    upper=quantile(stemc_total, probs=0.90))
 
 stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = level, fill = level)) +
   geom_line() +
   geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
   facet_wrap(~thin) +
   geom_ribbon(aes(ymin=lower, ymax=upper), alpha = .3) +
-  labs(
+ labs(
     x = 'years after thin',
-    y = 'stem carbon',
-    title = 'change in TOTAL stem carbon over time by thinning %'
+    y = 'mean stem carbon (Kg/m^2)',
+    fill = 'climate scenario'
   )
 stemc_plot
 
 ```
   
+    
+    
+  total plant carbon (Kg/m2) for each climate scenario based on thinning. precip is cumulative across all 100 years
+```{r carbon counts, echo=F, warning=F, message=F}
 
-```{r, echo = F}
+
 flux <- thin_full %>% 
   group_by(wyg, thin, climproj) %>% 
   summarise(
@@ -338,33 +381,23 @@ flux <- thin_full %>%
     sd = sd(stemc_total)
   )
 
-ggplot(flux, aes(wyg, mean, group = as.factor(thin), fill = as.factor(thin))) +
-  geom_line() +
-  facet_wrap(~climproj) +
-  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3)  +
-  labs(
-    x = 'years after thin',
-    y = 'stem carbon',
-    title = 'change in total stem carbon over time by model'
-  )
-```
-    
-    
-  total plant carbon (Kg/m2) for each climate scenario based on thinning. precip is cumulative across all 100 years
-```{r, echo=F, warning=F, message=F}
+# get mean stem carbon across models at year 99
 summary <- flux %>% 
   ungroup() %>% 
-  filter(wyg == 79) %>% 
-  mutate(mean = round(mean/1000,0)) %>% 
+  filter(wyg == 99) %>% 
+  mutate(mean = round(mean,0)) %>% 
   select(-wyg, -sd) %>% 
   spread(thin, mean) %>% 
   arrange(-`100`)
 
-met_sum <- met %>% 
+# calculate total precip for each model
+met_sum <- met_date %>% 
   group_by(climproj) %>% 
   summarise(
     total_precip = sum(rain)
   )
+
+# remove historic climate data
 met_sum$climproj[met_sum$climproj == 'JF'] <- 'historic'
 
 ext <- left_join(summary, met_sum)
@@ -373,7 +406,8 @@ kable(ext) %>%
   kable_styling()
 ```  
 
-```{r}
+#### NPV
+```{r npv, echo=F}
 #### using invest NPV formula for carbon
 
 
@@ -392,9 +426,12 @@ plantc_chg <- thin_full %>%
 delta <- as.data.frame(matrix(nrow = nrow(plantc_chg)/2, ncol = 3))
 names(delta) <- c('level', 'thin','diff')
 
+# calculate number of unique thinning v. climate scenarios so that we can index by that value
+length <- length(unique(plantc_chg$thin)) * length(unique(plantc_chg$level))
+
 delta$diff <- round(plantc_chg$plantc[plantc_chg$wyg == end] - plantc_chg$plantc[plantc_chg$wyg == start],2)/1000
-delta$level <- plantc_chg$level[1:18]
-delta$thin <- plantc_chg$thin[1:18]
+delta$level <- plantc_chg$level[1:length]
+delta$thin <- plantc_chg$thin[1:length]
  
 
 #summary table of differences
@@ -412,6 +449,8 @@ r <- .07
 c <- .02
 
 time <- end-start
+
+# calculate discount based on above values
 x <- vector()
 for(i in 1:time){
   
@@ -420,12 +459,13 @@ for(i in 1:time){
 }
 discount <- sum(x)
 
-
+# calc NPV
 npv <- delta %>% 
   mutate(npv = V*(diff*10/time)*discount) %>% 
   select(-diff) %>% 
   spread(thin, npv)
 
+# create table
 kable(npv) %>% 
   kable_styling()
 ```
@@ -433,7 +473,8 @@ kable(npv) %>%
  
   
 ##### number of years until stemc returns to 90% of original levels for each model and thinning treatment
-```{r time until return, echo = F}
+```{r time until return, warning=F,message=F, echo = F}
+# calculate target 90% level for each model
 tmp <- flux %>% 
   ungroup() %>% 
   filter(wyg == 0, thin == 100) %>% 
@@ -443,18 +484,23 @@ tmp <- flux %>%
 
 thin <- unique(flux$thin)
 
+## for each climate model and thin
 res <- data.frame()
-res[1:9,1] <- climscen
+res[1:9,1] <- climscen[1:9] # get first 9 which doesnt include drought scenarios
 for (i in 1:length(climscen)) {
   for (j in 1:length(thin)) {
    
+    # index target
   target <- tmp$target[tmp$climproj == climscen[i]]
+  
+  #  for each model and thin, ID the wyg where the mean stemc exceeds the target 90%
   res[i,j+1] <- min(flux$wyg[flux$climproj == climscen[i] & flux$thin == thin[j] & flux$mean >= target])  
      
   }
 }
 names(res) <- c('climproj', thin)
 
+#replace all `Inf` (I.e never reaches target) with >99
 for (i in 1:length(res)) {
   res[,i][res[,i] == Inf] <- '>99'
 }
@@ -463,7 +509,31 @@ kable(res) %>%
   kable_styling()
 ```
 
+## exploring
 
+```{r carbon by model, echo = F}
+
+# how does carbon change by model?
+
+flux <- thin_full %>% 
+  group_by(wyg, thin, climproj) %>% 
+  summarise(
+    mean = mean(stemc_total),
+    sd = sd(stemc_total)
+  )
+
+ggplot(flux, aes(wyg, mean, group = as.factor(thin), fill = as.factor(thin))) +
+  geom_line() +
+  facet_wrap(~climproj) +
+  geom_ribbon(aes(ymin=mean-2*sd, ymax=mean+2*sd), alpha = .3)  +
+  labs(
+    x = 'years after thin',
+    y = 'stem carbon',
+    title = 'change in total stem carbon over time by model'
+  )
+```
+
+##### investigation the large variation during the early years of the above graphs:
 ```{r starting year on variability, echo = F}
 # get summary met data for each year
 met_sum <- met_date %>% 
@@ -502,10 +572,7 @@ ggplot(test, aes(x = tavg, y = pct_change, color = wyg)) +
 
 
 ```
-  
-######  Note that as the starting year (scenario) increases, we see that the largest percent increase in stemc see in the years just after harvest, along with an upwards shift in the minimum average temperatures. This may explain the initial large standard deviations within the some of the above figures.  
-    
-###### This trend is less pronounced when considering models that have less variability in their effect on stemc over time. i.e:
+
   
 ```{r starting year on variability rcp45-cnrm, echo = F}
 
@@ -558,16 +625,26 @@ stream45 <- rcp45 %>%
 
 ggplot(stream45, aes(x = wy, y = streamflow, levels = thin, color = as.factor(thin))) +
   geom_line() +
-  facet_wrap(~climproj)
+  facet_wrap(~climproj) +
+  labs(
+    y = 'streamflow (mm)',
+    x = 'water year',
+    color = 'thin level'
+  )
 ```
 
 ```{r, echo = F}
 
 stream85 <- filter(rcp85, thin %in% thin_sub & scen == 2080)
 
-ggplot(stream85, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(thin))) +
+ggplot(stream85, aes(x = wy, y = streamflow, levels = thin, color = as.factor(thin))) +
   geom_line() +
-  facet_wrap(~climproj)
+  facet_wrap(~climproj) +
+  labs(
+    y = 'streamflow (mm)',
+    x = 'water year',
+    color = 'thin level'
+  )
 ```
   
   Things to explore here: overlay precipitation w/ ET. can also look out groundwater to try to figure out where the water is going
@@ -576,7 +653,8 @@ ggplot(stream85, aes(x = wyg, y = streamflow, levels = thin, color = as.factor(t
 
 ### rcp85-Had drought scenarios
 
-```{r}
+```{r drought, echo=F}
+
 drought$stemc_total <- drought$stemc_dead+drought$stemc_live
 
 stemc_tot <- drought %>%
@@ -588,7 +666,7 @@ stemc_tot <- drought %>%
 
 stemc_plot <- ggplot(stemc_tot, aes(x=wyg, y=mean, group = climproj, fill = climproj)) +
   geom_line(aes(color = climproj)) +
-  geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0 & stemc_tot$climproj == 'rcp85-Had'], color = 'darkgreen', size = 1) + # do we want to visually compare against starting value of the control, or the mean, or...?
+  geom_hline(yintercept = stemc_tot$mean[stemc_tot$thin==100 & stemc_tot$wyg == 0 & stemc_tot$climproj == 'rcp85-Had'], color = 'darkgreen', size = 1) + 
   facet_wrap(~thin) +
   labs(
     x = 'years after thin',

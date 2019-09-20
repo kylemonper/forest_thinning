@@ -1,3 +1,4 @@
+# set to directory with rhessys scripts
 setwd('/Users/kmonper/Google Drive/JDSF/rhessys/scripts')
 
 
@@ -44,6 +45,9 @@ nvals = 3*nday*length(startwy)*9
 thin_2patch = as.data.frame(matrix(nrow=nvals, ncol=length(c(ecovars,scenvars))))
 colnames(thin_2patch) = c(scenvars, ecovars)
 
+
+
+#### run rhessys with all climate projections and scenarios
 j = 1 
 for (proj in 1:length(climproj)) { 
   
@@ -64,7 +68,7 @@ for (proj in 1:length(climproj)) {
                      rhessysver,startwy[scen]-10, endwy[scen]-1, climproj[proj]); 
       system(cmd2)
       
-      # note running location
+      # note status of the loop while it is running
       print(c(proj, startwy[scen]))
       
       #read in data
@@ -126,6 +130,7 @@ for (proj in 1:length(climproj)) {
 
 }
 
+### write files seperately so they can be read in more easily (one large .txt file is too large for R)
 
 tmp <- filter(thin_2patch, climproj == 'rcp45-Had')
 write.table(tmp, '../out/JF_thin-proj-rcp45-Had')
